@@ -73,3 +73,17 @@ VALUES
   (1, 1, 'this is a sub reply', 1),
   (2, NULL, 'question 2 reponse', 1),
   (1, NULL, 'Filler MK 2, the fillering', 2);
+
+INSERT INTO
+  question_follows (follower_id, question_id)
+VALUES 
+  (1, 1),
+  (2, 1),
+  (2, 2);
+
+INSERT INTO
+  question_likes (user_id, question_id)
+VALUES
+  (1, 1),
+  (2, 1),
+  (2, 2);
