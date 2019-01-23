@@ -1,5 +1,6 @@
 require 'sqlite3'
 require 'singleton'
+require 'active_support/inflector'
 
 class QuestionsDBConnection < SQLite3::Database
   include Singleton
@@ -11,7 +12,24 @@ class QuestionsDBConnection < SQLite3::Database
   end
 end
 
-class User
+class SuperDB
+
+  def self.find_by_id(id)
+    table = self.to_s.tableize
+    subclass = QuestionsDBConnection.instance.execute(<<-SQL, id)
+    SELECT
+      *
+    FROM
+      #{table}
+    WHERE
+      id = ?
+    SQL
+
+    self.new(subclass[0])
+  end
+end
+
+class User < SuperDB
   attr_accessor :id, :fname, :lname, :is_instructor
 
   def initialize(options)
@@ -21,20 +39,6 @@ class User
     @is_instructor = options['is_instructor']
   end
 
-  def self.find_by_id(id)
-    user = QuestionsDBConnection.instance.execute(<<-SQL, id)
-    SELECT
-      *
-    FROM
-      users
-    WHERE
-      id = ?
-    SQL
-
-    # test.each { |datum| User.new(datum) }
-
-    User.new(user[0])
-  end
 
   def self.find_by_name(fname, lname)
 
@@ -104,7 +108,7 @@ class User
 
 end
 
-class Question
+class Question < SuperDB
   attr_accessor :id, :title, :body, :author_id
 
   def initialize(options)
@@ -114,18 +118,6 @@ class Question
     @author_id = options['author_id']
   end
 
-  def self.find_by_id(id)
-    question = QuestionsDBConnection.instance.execute(<<-SQL, id)
-    SELECT
-      *
-    FROM
-      questions
-    WHERE
-      id = ?
-    SQL
-
-    Question.new(question[0])
-  end
 
   def self.find_by_author_id(author_id)
     return "No Questions" if author_id == nil
@@ -261,7 +253,7 @@ class QuestionFollow
 end
 
 
-class Reply
+class Reply < SuperDB
 
   attr_accessor :id, :original_post, :parent_reply, :body, :author_id
 
@@ -271,19 +263,6 @@ class Reply
     @parent_reply = options['parent_reply']
     @body = options['body']
     @author_id = options['author_id'] 
-  end
-
-  def self.find_by_id(id)
-    reply = QuestionsDBConnection.instance.execute(<<-SQL, id)
-      SELECT
-        *
-      FROM
-        replies
-      WHERE
-        id = ?
-    SQL
-
-    Reply.new(reply[0])
   end
 
   def self.find_by_question_id(question_id)
